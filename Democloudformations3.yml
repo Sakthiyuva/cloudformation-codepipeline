@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: The CloudFormation template for the EC2,ALB,S3.
+
+Parameters:
+  KeyName:
+    Description: EC2 Key Pair for SSH Access, you must have created these prior to running this.
+    Type: String
+    Default: yuva    
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+    - t1.micro
+    - t2.nano
+    - t2.micro
+    - t2.small
+    - t2.medium 
+  Tags:
+    Description: EC2 tag name of launch instance
+    Type: String
+    Default: codepipeline2
+
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-0bb9c8e2f20ab72fb
+  PublicSubnetA:
+    Type: String
+    Default: subnet-0be4e46e01c1ce1a5
+  PublicSubnetB:
+    Type: String
+    Default: subnet-0f86b71e7a832b2a8
+ 
+Resources:
+# Create a  Amazon Linux Instance and attach a security group
+    EC2Instance:
+      Type: AWS::EC2::Instance
+      Properties:
+        KeyName: !Ref KeyName
+        InstanceType: !Ref  InstanceType
+        ImageId: ami-0c2b8ca1dad447f8a
+        NetworkInterfaces:
+          - GroupSet:
+              - !Ref InstanceSg
+            AssociatePublicIpAddress: 'true'
+            DeviceIndex: '0'
+            DeleteOnTermination: 'true'
+            SubnetId: !Ref PublicSubnetA
+        Tags:
+          - Key: Name
+            Value: !Ref Tags   
+  
+#   Creat a security group for Ec2 instance and open port 80 in bound from internet
+    InstanceSg:
+       Type: AWS::EC2::SecurityGroup
+       Properties:
+         GroupDescription: Enable SSH access via port 22
+         VpcId: !Ref VPC
+         SecurityGroupIngress:
+           - IpProtocol: tcp
+             FromPort: '22'
+             ToPort: '22'
+             CidrIp: 0.0.0.0/0
+           - IpProtocol: tcp
+             FromPort: '80'
+             ToPort: '80'
+             CidrIp: 0.0.0.0/0
